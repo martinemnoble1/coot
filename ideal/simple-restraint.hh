@@ -1231,9 +1231,7 @@ namespace coot {
 
 #ifndef __NVCC__
          restraints_lock = false; // not locked
-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
          thread_pool_p = 0; // null pointer
-#endif
 #endif // __NVCC__
       }
 
@@ -2725,8 +2723,7 @@ namespace coot {
       // I think so - for example crankshaft
       //
       unsigned int n_threads;
-#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
-      // thread pool!
+      // thread pool - uses stub implementation when HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined
       //
       ctpl::thread_pool *thread_pool_p;
       // std::atomic<unsigned int> &done_count_for_threads;
@@ -2743,6 +2740,7 @@ namespace coot {
       //
       // ctpl::thread_pool another_thread_pool;
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
       void make_df_restraints_indices();
       void make_distortion_electron_density_ranges();
       void clear_df_by_thread_results();
@@ -2754,7 +2752,6 @@ namespace coot {
       std::vector<std::vector<std::size_t> > df_by_thread_atom_indices; // for electron density
       // pull restraints are dynamically added to the end of restraints_indices
       std::vector<std::vector<std::size_t> > restraints_indices;
-
 #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
 
       void clear();

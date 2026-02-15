@@ -26,7 +26,9 @@
 
 #include <iostream>
 #include <chrono>
+#ifdef HAVE_CXX_THREAD
 #include <thread>
+#endif
 
 #include "utils/coot-utils.hh"
 #include "utils/split-indices.hh"
@@ -268,6 +270,7 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
    int brick_index_max = range[0] * range[1] * range[2];
    float dist_max_sqrd = dist_nbc_max * dist_nbc_max;
 
+#ifdef HAVE_CXX_THREAD
    std::vector<std::thread> threads;
 
    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
@@ -279,6 +282,16 @@ coot::contacts_by_bricks::find_the_contacts_between_bricks_multi_thread(std::vec
    }
    for (std::size_t ii=0; ii<thread_index_sets.size(); ii++)
       threads[ii].join();
+#else
+   // Single-threaded fallback: call workpackage directly for each index set
+   for (std::size_t ii=0; ii<thread_index_sets.size(); ii++) {
+      const std::vector<unsigned int> &index_set = thread_index_sets[ii];
+      find_the_contacts_between_bricks_multi_thread_workpackage(
+         vec_p, index_set, atoms_in_bricks,
+         fixed_flags, range, atoms, brick_index_max, dist_nbc_max,
+         only_between_different_residues_flag);
+   }
+#endif
 
    if (false) {
       auto tp_1 = std::chrono::high_resolution_clock::now();

@@ -78,8 +78,7 @@ coot::restraints_container_t::make_restraints(int imol,
 					      bool do_flank_restraints) {
 
 
-#if 1
-
+   // make_restraints_ng now works in both threaded and single-threaded builds
    make_restraints_ng(imol, geom, flags_in, do_residue_internal_torsions, do_trans_peptide_restraints,
 		      rama_plot_target_weight, do_rama_plot_restraints,
 		      do_auto_helix_restraints,
@@ -88,8 +87,8 @@ coot::restraints_container_t::make_restraints(int imol,
 		      sec_struct_pseudo_bonds, do_link_restraints, do_flank_restraints);
 
    return size();
-#endif
 
+   // Dead code below - kept for reference but never executed since we always return above
    // if a peptide is trans, add a restraint to penalize non-trans configuration
    // (currently a torsion restraint on peptide w of 180)
    //

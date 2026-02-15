@@ -2488,7 +2488,22 @@ coot::electron_density_score_from_restraints(const gsl_vector *v,
    }
 
 #else
-   std::cout << __FUNCTION__ << " no thread pool" << std::endl;
+   // Single-threaded fallback: calculate electron density score directly
+   if (restraints_p->include_map_terms() == 1) {
+      unsigned int n_atoms = restraints_p->get_n_atoms();
+      for (unsigned int iat=0; iat<n_atoms; iat++) {
+         if (restraints_p->use_map_gradient_for_atom[iat]) {
+            int idx = 3 * iat;
+            clipper::Coord_orth ao(gsl_vector_get(v,idx),
+                                   gsl_vector_get(v,idx+1),
+                                   gsl_vector_get(v,idx+2));
+            score += restraints_p->Map_weight() *
+               restraints_p->atom_z_occ_weight[iat] *
+               restraints_p->electron_density_score_at_point(ao);
+         }
+      }
+      score = -score;
+   }
 #endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    return score;
 }

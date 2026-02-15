@@ -144,7 +144,7 @@ class molecules_container_t {
    bool use_torsion_restraints;
    float torsion_restraints_weight;
 
-   ctpl::thread_pool thread_pool;
+   ctpl::thread_pool thread_pool;  // Uses stub implementation when threading disabled
    bool show_timings;
 
    coot::restraints_container_t *last_restraints;

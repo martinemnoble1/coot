@@ -414,6 +414,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                unsigned int grid_offset = c_u * gs.nu() * gs.nv() + c_v * gs.nv() + c_w;
                const float f = *reinterpret_cast<const float *>(map_data + 4 * offset + 4 * grid_offset);
 
+#ifdef HAVE_CXX_THREAD
                if (true) { // debugging
                   bool unlocked = false;
                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
@@ -423,6 +424,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                   std::cout << " " << iw.coord().format() << " " << f << std::endl;
                   print_lock = false;
                }
+#endif
 
                (*xmap)[iw] = f;
                c_w++;
@@ -448,6 +450,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                                clipper::Xmap<float>::Map_reference_coord mrc(*xmap);
                                // this is unsigned int because split_indices returns unsigned int pairs.
 
+#ifdef HAVE_CXX_THREAD
                                if (false) { // debugging
                                   bool unlocked = false;
                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
@@ -460,6 +463,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                                             << std::endl;
                                   print_lock = false;
                                }
+#endif
 
                                for (unsigned int isec = start_stop_section_index.first; isec < start_stop_section_index.second; isec++ ) {
 
@@ -487,6 +491,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                                   }
                                }
 
+#ifdef HAVE_CXX_THREAD
                                if (false) { // debugging
                                   bool unlocked = false;
                                   while (! print_lock.compare_exchange_weak(unlocked, true)) {
@@ -497,6 +502,7 @@ coot::util::slurp_parse_xmap_data(char *data,
                                             << start_stop_section_index.second << "\n";
                                   print_lock = false;
                                }
+#endif
                             };
 
 

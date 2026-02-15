@@ -66,7 +66,8 @@ molecules_container_t::~molecules_container_t() {
 // verbose is an optional arg, default true
 molecules_container_t::molecules_container_t(bool verbose) :
    ramachandrans_container(ramachandrans_container_t()),
-   thread_pool(8) {
+   thread_pool(8)  // Uses stub implementation when threading disabled
+{
    if (! verbose) geom.set_verbose(false);
    init();
 }
@@ -2174,7 +2175,11 @@ molecules_container_t::get_map_contours_mesh(int imol, double position_x, double
             update_updating_maps(updating_maps_info.imol_model);
          }
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
          mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, map_is_contoured_using_thread_pool_flag, &thread_pool);
+#else
+         mesh = molecules[imol].get_map_contours_mesh(position, radius, contour_level, false, nullptr);
+#endif
       } else {
          std::cout << "WARNING:: get_map_contours_mesh() Not a valid map molecule " << imol << std::endl;
       }
@@ -2954,7 +2959,11 @@ molecules_container_t::refine_direct(int imol, std::vector<mmdb::Residue *> rv, 
                 << std::endl;
 
    // this is not stored in molecules_container!
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    unsigned int max_number_of_threads = thread_pool.size();
+#else
+   unsigned int max_number_of_threads = 1;
+#endif
 
    int status = 0;
    if (is_valid_model_molecule(imol)) {
@@ -5549,7 +5558,9 @@ molecules_container_t::get_hb_type(const std::string &compound_id, int imol_enc,
 void
 molecules_container_t::set_max_number_of_threads(unsigned int n_threads) {
    coot::set_max_number_of_threads(n_threads);
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    thread_pool.resize(n_threads);
+#endif
 }
 
 // call the above function
@@ -5617,6 +5628,7 @@ molecules_container_t::test_launching_threads(unsigned int n_threads_per_batch, 
 double
 molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    auto sum = [] (unsigned int thread_index, unsigned int i, unsigned int j, std::atomic<unsigned int> &done_count_for_threads) {
       done_count_for_threads++;
       return i+j;
@@ -5636,6 +5648,9 @@ molecules_container_t::test_thread_pool_threads(unsigned int n_threads) {
    auto d10 = std::chrono::duration_cast<std::chrono::microseconds>(tp_1 - tp_0).count();
    t = d10;
    return t;
+#else
+   return 0.0;
+#endif
 
 }
 

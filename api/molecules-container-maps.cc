@@ -723,8 +723,13 @@ molecules_container_t::get_map_vertices_histogram(int imol, int imol_map_for_sam
       if (is_valid_map_molecule(imol_map_for_sampling)) {
 	 clipper::Coord_orth p(position_x, position_y, position_z);
 	 const clipper::Xmap<float> &other_xmap = molecules[imol_map_for_sampling].xmap;
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
 	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
 							 map_is_contoured_using_thread_pool_flag, &thread_pool, n_bins);
+#else
+	 hi = molecules[imol].get_map_vertices_histogram(other_xmap, p, radius, contour_level,
+							 false, nullptr, n_bins);
+#endif
       }
    }
    return hi;

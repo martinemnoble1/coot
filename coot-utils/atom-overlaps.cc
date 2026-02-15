@@ -1878,7 +1878,9 @@ coot::atom_overlaps_container_t::all_atom_contact_dots_internal_multi_thread(dou
 
          unsigned int n_threads = get_max_number_of_threads();
          n_threads = 1;
+#ifdef HAVE_CXX_THREAD
          std::vector<std::thread> threads;
+#endif
          unsigned int n_per_thread = n_selected_atoms/n_threads;
          // std::cout << "n per thread " << n_per_thread << std::endl;
          std::vector<atom_overlaps_dots_container_t> results_container_vec(n_threads);
@@ -1898,17 +1900,29 @@ coot::atom_overlaps_container_t::all_atom_contact_dots_internal_multi_thread(dou
             // 20230814-PE I saw a crash here today. It seems to be crashing on the creation
             // of the thread - I don't know what that means.
             //
+#ifdef HAVE_CXX_THREAD
             threads.push_back(std::thread(contacts_for_atoms, iat_start, iat_end,
                                           atom_selection, contact_map, bonded_map,
                                           neighb_atom_radius, udd_h_bond_type_handle,
                                           molecule_has_hydrogens, probe_radius,
                                           dot_density_in, clash_spike_length, make_vdw_surface,
                                           &results_container_vec[i_thread]));
+#else
+            // Single-threaded: call directly
+            contacts_for_atoms(iat_start, iat_end,
+                              atom_selection, contact_map, bonded_map,
+                              neighb_atom_radius, udd_h_bond_type_handle,
+                              molecule_has_hydrogens, probe_radius,
+                              dot_density_in, clash_spike_length, make_vdw_surface,
+                              &results_container_vec[i_thread]);
+#endif
 
          }
 
+#ifdef HAVE_CXX_THREAD
          for (unsigned int i_thread=0; i_thread<n_threads; i_thread++)
             threads.at(i_thread).join();
+#endif
 
          if (false) {
             for (unsigned int i_thread=0; i_thread<n_threads; i_thread++) {

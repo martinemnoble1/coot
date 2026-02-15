@@ -21,6 +21,13 @@
 #ifndef __ctpl_thread_pool_H__
 #define __ctpl_thread_pool_H__
 
+// When HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is not defined, use stub implementation
+#ifndef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
+
+#include "ctpl_stub.h"
+
+#else // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY is defined - use full threaded implementation
+
 #include <functional>
 #include <thread>
 #include <atomic>
@@ -235,6 +242,8 @@ namespace ctpl {
     };
 
 }
+
+#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
 
 #endif // __ctpl_thread_pool_H__
 

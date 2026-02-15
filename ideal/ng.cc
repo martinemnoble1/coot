@@ -27,17 +27,17 @@
 #include <iomanip>
 
 #include "compat/coot-sysdep.h"
+#include "simple-restraint.hh"
 
 #include "coot-utils/bonded-pairs.hh"
 #include "geometry/residue-and-atom-specs.hh"
-#include "simple-restraint.hh"
 #include "coot-utils/contacts-by-bricks.hh"
 #include "coot-utils/stack-and-pair.hh"
 
 #include "utils/logging.hh"
 extern logging logger;
 
-
+// make_restraints_ng now works in both threaded and single-threaded builds
 int
 coot::restraints_container_t::make_restraints_ng(int imol,
                                                  const coot::protein_geometry &geom,
@@ -60,12 +60,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
 
    bool console_output_for_restraints_generation_timings = false;
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    if (! thread_pool_p) {
          std::cout << "ERROR:: " << __FUNCTION__ << " --- thread pool was not set! ---------"
                    << std::endl;
          std::cout << "ERROR:: make_restraints_ng() stops before it starts" << std::endl;
          return -1;
    }
+#endif
 
    auto tp_0 = std::chrono::high_resolution_clock::now();
    restraints_usage_flag = flags_in;
@@ -145,15 +147,14 @@ coot::restraints_container_t::make_restraints_ng(int imol,
       // the non-threaded version has a different limit on the
       // non_bonded_contacts_atom_indices (so, out of range if you use it?)
 
-      if (! thread_pool_p) {
-         std::cout << "ERROR:: ------- " << __FUNCTION__ << " - thread pool was not set! ---------"
-                   << std::endl;
-         // and yet we continue... that's bad news.
-         std::cout << "ERROR:: Bad things will now happen" << std::endl;
-      }
-
-      if (! just_chirals)
+      if (! just_chirals) {
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
          make_non_bonded_contact_restraints_using_threads_ng(imol, geom);
+#else
+         // Single-threaded fallback: use non-threaded NBC function
+         make_non_bonded_contact_restraints_ng(imol, geom);
+#endif
+      }
 
       auto tp_5 = std::chrono::high_resolution_clock::now();
 
@@ -195,8 +196,10 @@ coot::restraints_container_t::make_restraints_ng(int imol,
             make_base_pairing_and_stacking_restraints_ng(imol, geom);
       }
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
       make_df_restraints_indices();
       make_distortion_electron_density_ranges();
+#endif
 
       // Now we don't do this here - we do it after all the restraints have been added -
       // called from graphics-info-modelling.cc
@@ -540,6 +543,7 @@ coot::restraints_container_t::make_flanking_atoms_restraints_ng(const coot::prot
    // flank_restraints.report();
 }
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
 // static
 void
 coot::restraints_container_t::make_non_bonded_contact_restraints_workpackage_ng(int ithread,
@@ -1139,6 +1143,7 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_using_threads_n
                 << " adding NBCs to restraints " << d65 << std::endl;
 
 }
+#endif // HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
 
 
 unsigned int
@@ -1461,9 +1466,10 @@ coot::restraints_container_t::make_non_bonded_contact_restraints_ng(int imol,
       }
    }
 
+#ifdef HAVE_BOOST_BASED_THREAD_POOL_LIBRARY
    make_df_restraints_indices();
-   // is the following needed? I doubt.
    make_distortion_electron_density_ranges();
+#endif
 
    return n_nbc_restraints;
 

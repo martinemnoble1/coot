@@ -259,6 +259,7 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
    if (!xmap.is_null()) {
 
       clear_draw_vecs();
+#ifdef HAVE_CXX_THREAD
       std::vector<std::thread> threads;
       int n_reams = coot::get_max_number_of_threads() - 1;
       if (n_reams < 1) n_reams = 1;
@@ -285,6 +286,18 @@ coot::molecule_t::update_map_triangles(float radius, coot::Cartesian centre, flo
             threads[ii].join();
 
       }
+#else
+      // Single-threaded fallback: call directly with n_reams=1
+      gensurf_and_add_vecs_threaded_workpackage(&xmap, contour_level, dy_radius, centre,
+                                                isample_step, 0, 1, is_em_map,
+                                                &draw_vector_sets);
+      if (xmap_is_diff_map) {
+         clear_diff_map_draw_vecs();
+         gensurf_and_add_vecs_threaded_workpackage(&xmap, -contour_level, dy_radius, centre,
+                                                   isample_step, 0, 1, is_em_map,
+                                                   &draw_diff_map_vector_sets);
+      }
+#endif
 
       if (is_dynamically_transformed_map_flag) {
          for (unsigned int ii=0; ii<draw_vector_sets.size(); ii++) {
